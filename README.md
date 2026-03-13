@@ -1,77 +1,77 @@
-# Social Live Feed | Event-Driven Dashboard
+# Social Live Feed | Dashboard Berbasis Event
 
-A high-performance, real-time social media activity dashboard built to demonstrate **Asynchronous Event-Driven Architecture** using RabbitMQ, Python, FastAPI, PostgreSQL, and Next.js.
+Dashboard aktivitas media sosial real-time berperforma tinggi yang dibangun untuk mendemonstrasikan **Arsitektur Berbasis Event Asinkron** menggunakan RabbitMQ, Python, FastAPI, PostgreSQL, dan Next.js.
 
-## 📁 Project Structure
-- **/backend** — FastAPI + RabbitMQ bridge
-  - `socket_server.py` — Bridge: consumes RabbitMQ → WebSocket, persists to DB
-  - `activity_service.py` — Producer: publishes random social events
-  - `notification_service.py` — Console consumer (for debugging)
-  - `Dockerfile` — Container image for the backend
-  - `requirements.txt` — Python dependencies
-- **/frontend** — Next.js 14 dashboard
-  - `Dockerfile` — Multi-stage container build
-- **/db** — Database files (auto-loaded by Docker on first boot)
-  - `init.sql` — Table schema (`users`, `social_events`)
-  - `seed.sql` — Sample users & 12 seed events
-- `docker-compose.yml` — Orchestrates all 4 services
+## Struktur Proyek
+- **/backend** — Jembatan FastAPI + RabbitMQ
+  - `socket_server.py` — Penghubung: konsumsi RabbitMQ → WebSocket, simpan ke DB
+  - `activity_service.py` — Producer: kirim event sosial acak
+  - `notification_service.py` — Konsumen terminal (untuk debugging)
+  - `Dockerfile` — Gambar kontainer untuk backend
+  - `requirements.txt` — Dependensi Python
+- **/frontend** — Dashboard Next.js 14
+  - `Dockerfile` — Build kontainer multi-tahap
+- **/db** — File basis data (dimuat otomatis oleh Docker saat boot pertama)
+  - `init.sql` — Skema tabel (`users`, `social_events`)
+  - `seed.sql` — Sampel pengguna & 12 event awal
+- `docker-compose.yml` — Orkestrasi untuk ke-4 layanan
 
 ---
 
-## 🐳 Quick Start with Docker (Recommended)
+## Panduan Cepat dengan Docker (Direkomendasikan)
 
-> Requires Docker Desktop installed and running.
+> Membutuhkan Docker Desktop yang sudah terpasang dan berjalan.
 
 ```bash
-# Build & start all services (db, rabbitmq, backend, frontend)
+# Build & jalankan semua layanan (db, rabbitmq, backend, frontend)
 docker compose up --build
 
-# Visit the app
-open http://localhost:3000
+# Buka aplikasi
+# open http://localhost:3000
 
-# RabbitMQ management UI
-open http://localhost:15672   # guest / guest
+# UI manajemen RabbitMQ
+# open http://localhost:15672   # guest / guest
 ```
 
-On **first boot**, PostgreSQL automatically runs `db/init.sql` (creates tables) then `db/seed.sql` (inserts sample data).
+Pada **boot pertama**, PostgreSQL secara otomatis menjalankan `db/init.sql` (membuat tabel) kemudian `db/seed.sql` (memasukkan data sampel).
 
-### Verify the database
+### Verifikasi basis data
 ```bash
-# List seed users
+# List sampel pengguna
 docker exec socialfeed_db psql -U postgres -d socialdb -c "SELECT * FROM users;"
 
-# List seed events
+# List sampel event
 docker exec socialfeed_db psql -U postgres -d socialdb \
   -c "SELECT id, \"user\", action, target, timestamp FROM social_events;"
 ```
 
-### Trigger an event manually
+### Memicu event secara manual
 ```bash
 curl -X POST http://localhost:8000/trigger \
   -H "Content-Type: application/json" \
   -d '{"user":"Alice","action":"liked","target":"Post #101","target_user":"Bob","timestamp":"12:00:00"}'
 ```
 
-### Stop everything
+### Menghentikan layanan
 ```bash
-docker compose down          # Keep DB volume
-docker compose down -v       # Also wipe DB data (fresh seed on next up)
+docker compose down          # Tetap simpan volume DB
+docker compose down -v       # Hapus juga data DB (seed ulang saat dijalankan lagi)
 ```
 
 ---
 
-## 🖥️ Local Development (without Docker)
+## Pengembangan Lokal (Tanpa Docker)
 
-### 1. Requirements
-- RabbitMQ running locally
-- PostgreSQL running locally (`socialdb` database)
-- Python 3.11+ and Node 20+
+### 1. Persyaratan
+- RabbitMQ berjalan secara lokal
+- PostgreSQL berjalan secara lokal (database `socialdb`)
+- Python 3.11+ dan Node 20+
 
 ```bash
-# Start RabbitMQ
+# Jalankan RabbitMQ
 docker run -d --name rabbitmq-local -p 5672:5672 rabbitmq:3-management
 
-# Create local DB and seed it
+# Buat DB lokal dan masukkan seed
 psql -U postgres -c "CREATE DATABASE socialdb;"
 psql -U postgres -d socialdb -f db/init.sql
 psql -U postgres -d socialdb -f db/seed.sql
@@ -91,7 +91,7 @@ pnpm install
 pnpm run dev
 ```
 
-### 4. Trigger test events
+### 4. Jalankan pengujian event
 ```bash
 cd backend
 python activity_service.py
@@ -99,41 +99,49 @@ python activity_service.py
 
 ---
 
-## 💡 Technical Concepts
+## Konsep Teknis
 
-### Asynchronous vs. Synchronous
+### Asinkron vs. Sinkron
 
-| Feature | Synchronous (REST) | Asynchronous (RabbitMQ) |
+| Fitur | Sinkron (REST) | Asinkron (RabbitMQ) |
 | :--- | :--- | :--- |
-| **Blocking** | Producer waits for Consumer. | Producer sends and moves on. |
-| **Coupling** | Services must be online together. | Services are decoupled via a broker. |
-| **Resilience** | Request fails if service is down. | Messages are queued until service is back. |
-| **Scale** | Harder to scale under spikes. | Easy to scale by adding more consumers. |
+| **Blocking** | Producer menunggu Consumer. | Producer mengirim dan lanjut bekerja. |
+| **Coupling** | Layanan harus aktif bersamaan. | Layanan terpisah melalui broker. |
+| **Resiliensi** | Permintaan gagal jika layanan mati. | Pesan antri sampai layanan aktif kembali. |
+| **Skala** | Sulit diskalakan saat beban melonjak. | Mudah diskalakan dengan menambah konsumen. |
 
-### Concept
+### Konsep
 
-Aplikasi ini adalah **Social Live Feed** yang menggunakan arsitektur **Event-Driven**. Konsep utamanya adalah memisahkan pengirim pesan (**Producer**) dan penerima pesan (**Consumer**) menggunakan **RabbitMQ** sebagai perantara (Message Broker). Hal ini memungkinkan aplikasi untuk menangani ribuan notifikasi secara real-time tanpa membebani server utama, karena setiap aktivitas diproses secara asinkron di latar belakang.
+Aplikasi ini adalah **Social Live Feed** yang menggunakan arsitektur **Berbasis Event (Event-Driven)**. Konsep utamanya adalah memisahkan pengirim pesan (**Producer**) dan penerima pesan (**Consumer**) menggunakan **RabbitMQ** sebagai perantara (Message Broker). Hal ini memungkinkan aplikasi untuk menangani ribuan notifikasi secara real-time tanpa membebani server utama, karena setiap aktivitas diproses secara asinkron di latar belakang.
 
-### Implementation: RabbitMQ Notification
+### Implementasi: Notifikasi RabbitMQ
 
 Sistem notifikasi pada aplikasi ini diimplementasikan menggunakan model **Pub/Sub (Publish/Subscribe)** dengan tipe exchange `fanout`.
 
 1.  **Producer (`activity_service.py`)**: Bertugas memicu event sosial (seperti *like*, *comment*, *share* secara acak). Setiap event dikirim ke exchange `social_events`.
 2.  **Exchange (`fanout`)**: RabbitMQ akan menduplikasi pesan dari producer ke setiap antrian (**Queue**) yang terikat padanya.
 3.  **Consumer (`notification_service.py` & `socket_server.py`)**:
-    *   `notification_service.py` adalah consumer sederhana yang mencetak notifikasi ke terminal untuk keperluan debugging/monitoring.
-    *   `socket_server.py` mengkonsumsi pesan dari RabbitMQ, menyimpannya ke database PostgreSQL, dan meneruskannya ke frontend melalui **WebSocket** secara real-time.
+    *   `notification_service.py` adalah konsumen sederhana yang menampilkan notifikasi di terminal untuk keperluan debugging/monitoring.
+    *   `socket_server.py` mengonsumsi pesan dari RabbitMQ, menyimpannya ke database PostgreSQL, dan meneruskannya ke frontend melalui **WebSocket** secara real-time.
 
-Dengan RabbitMQ, jika service notifikasi sedang sibuk atau mati, pesan akan tetap tersimpan di antrian hingga service tersebut siap memprosesnya kembali, menjaga sistem tetap tangguh (**Resilient**).
+Dengan RabbitMQ, jika layanan notifikasi sedang sibuk atau mati, pesan akan tetap tersimpan di antrian hingga layanan tersebut siap memprosesnya kembali, menjaga sistem tetap tangguh (**Resilient**).
 
-### Architecture
+### Penggunaan AI Generatif
+
+Proyek ini dikembangkan dengan bantuan **AI Generatif** untuk mengoptimalkan berbagai aspek teknis, antara lain:
+- **Arsitektur Sistem**: Membantu perancangan alur kerja *event-driven* dan integrasi antar komponen.
+- **Implementasi Backend**: Mempercepat penulisan logika producer/consumer RabbitMQ dan integrasi WebSocket.
+- **Optimasi Database**: Membantu penyusunan skema relasional di PostgreSQL dan skrip seeding data.
+- **Desain UI/UX**: Memberikan saran gaya desain modern dan implementasi komponen menggunakan Tailwind CSS untuk tampilan yang premium.
+
+### Arsitektur
 ```
 [Activity Service] ──publish──▶ [RabbitMQ] ──consume──▶ [Socket Server]
-                                                               │
-                                                    ┌──────────┴──────────┐
-                                                    ▼                     ▼
-                                              [PostgreSQL]         [WebSocket]
-                                             (persistent)        (real-time)
-                                                                       │
-                                                                  [Next.js UI]
+                                                                │
+                                                     ┌──────────┴──────────┐
+                                                     ▼                     ▼
+                                               [PostgreSQL]         [WebSocket]
+                                               (persisten)          (real-time)
+                                                                        │
+                                                                   [Next.js UI]
 ```

@@ -34,17 +34,4 @@ INSERT INTO follows (follower_id, following_id) VALUES
     (2, 1), -- Bob follows Alice
     (3, 1); -- Charlie follows Alice
 
--- Sample social events (historic feed)
-INSERT INTO social_events ("user", action, target, target_user, timestamp) VALUES
-    ('alice',   'liked',        'Post #101', 'bob',     '08:01:00'),
-    ('bob',     'commented on', 'Post #202', 'charlie', '08:03:15'),
-    ('charlie', 'shared',       'Post #303', 'alice',   '08:05:42'),
-    ('david',   'liked',        'Post #101', 'alice',   '08:10:00'),
-    ('alice',   'shared',       'Post #202', 'david',   '08:12:30'),
-    ('bob',     'liked',        'Post #303', 'david',   '08:15:10'),
-    ('charlie', 'commented on', 'Post #101', 'bob',     '08:20:00'),
-    ('david',   'shared',       'Post #202', 'charlie', '08:22:45'),
-    ('alice',   'commented on', 'Post #303', 'charlie', '08:25:00'),
-    ('bob',     'shared',       'Post #101', 'alice',   '08:30:00'),
-    ('charlie', 'liked',        'Post #202', 'alice',   '08:35:00'),
-    ('david',   'commented on', 'Post #303', 'bob',     '08:40:00');
+-- Sample social events removed per user request

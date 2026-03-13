@@ -17,8 +17,9 @@ def publish_event():
     actions = ["liked", "commented on", "shared"]
     posts = ["Post #101", "Post #202", "Post #303"]
 
-    print(f"[*] Activity Service started. Sending events to '{exchange_name}'...")
-
+    print(f"[*] Activity Service started. (SEEDING DISABLED)")
+    # Seeding loop disabled per user request
+    """
     try:
         while True:
             # Create a mock social event
@@ -53,6 +54,8 @@ def publish_event():
         print("\n[*] Stopping Producer...")
     finally:
         connection.close()
+    """
 
 if __name__ == "__main__":
-    publish_event()
+    # publish_event()
+    print("Notification seeding is disabled.")
